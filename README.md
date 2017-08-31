@@ -24,20 +24,20 @@
 
 Java的声明式异常是十分优秀的语言特性，但Java开发者却很少自定义异常。
 
-下面是一段常见的登记代码：
+下面是一段常见的登录代码：
 ```Java
 public class UserController {
 
     private UserService userService;
 
     /**
-    * 1: 登陆成功 2: 用户名密码错误 3: 用户被锁定 4: ...
+    * 1: 登录成功 2: 用户名密码错误 3: 用户被锁定 4: ...
     */
     public CommonResponse login(String username, String password) { 
         CommonResponse res = new CommonResponse();
         res.code = userService.login(username, password);
         if(res.code == 1){
-            code.msg = "登陆成功";
+            code.msg = "登录成功";
         }else if(res.code == 2){
             code.msg = "用户名密码错误";
         }else if(res.code == 3){
@@ -52,7 +52,7 @@ public class UserController {
 public class UserService {
     
     /**
-    * 1: 登陆成功 2: 用户名密码错误 3: 用户被锁定 4: ...
+    * 1: 登录成功 2: 用户名密码错误 3: 用户被锁定 4: ...
     */
     public int login(String username, String password) { ... }
 }
