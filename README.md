@@ -86,7 +86,7 @@ public class UserController {
     private UserService userService;
 
     public void login(String username, String password) throws LoginException {
-        userService.log(username, password);
+        userService.login(username, password);
     }
 }
 ```
