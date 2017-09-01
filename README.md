@@ -112,3 +112,53 @@ public class UserController {
 if(obj == null) { ... }
 ```
 
+更糟糕的是：
+```Java
+//controller
+void login(String username, String password){
+    if(StringUtils.isEmpty(username)) { ... }
+    if(StringUtils.isEmpty(password)) { ... }
+
+    userService.service(username, password);
+}
+
+//service
+void login(String username, String password){
+    if(StringUtils.isEmpty(username)) { ... }
+    if(StringUtils.isEmpty(password)) { ... }
+
+    ...
+    String hashPassword = hash(username + password + "salt");
+    ...
+}
+
+String hash(String str){
+    if(str == null) { ... }
+    ... //do hash
+    return str;
+}
+```
+
+&emsp;&emsp;上面的代码对 username和password 做了重复的 null 判断。不仅浪费CPU而且增加编写的时间成本。
+为了解决 null 问题，很多语言提供了语法糖或者从根本上不允许出现 null 的变量。
+
+在Java中，我们需要一些约定来减少这种重复的劳动。
+
+> * 所有的参数与返回都不允许为 null，如果可能返回 null，或者允许传入 null， 则必须声明。
+> * 所有的数组，数据集合(如 java.util.Collection, java.util.stream.Stream... )都不可以为 null。
+
+&emsp;&emsp;遵守这些约定，把 null 判断的职责交给调用者。最终仅在数据的产生位置保证数据的正确性。
+对于业务系统来说，仅在JS端保证不会提交 null 数据即可。
+如果程序被黑盒测试或者遇到第三方攻击绕过了JS，让JVM帮助我们抛出空指针异常即可。<br>
+&emsp;&emsp;使用 java.util.Collections 中内置的各种空数据集传入，返回。
+
+## 如何声明 NULL
+
+* **注解** 使用 @Nullable 声明 允许为 null 的参数，可能为 null 的返回。
+目前 Eclipse 和 IDEA 支持自有注解库的静态分析。如果一个返回值添加了 @Nullable 注解，而使用者不经判断直接使用，IDE就会给出警告。
+
+* **java.util.Optional<T>** Java8的optional包装就隐含了可能是 null 的意思。
+
+# 参数与返回
+
+
