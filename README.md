@@ -290,6 +290,7 @@ public class Bird extends Animal {
 * 返回无歧义。JSON，XML，特殊符分割的String全部转化为有结构的Bean。
 * 如果调用者需要对派生类做出不同处理，则应避免返回基类。
 
+
 # 优先使用新版的JDK
 
 从读文件观察Java的更新进步：
@@ -298,19 +299,19 @@ public class Bird extends Animal {
 public String readFileAsString(File file) throws IOException {
     StringBuilder result = new StringBuilder();
     BufferedReader reader = null;
-    try{
+    try {
         reader = new BufferedReader(new FileReader(file));
         String line = reader.readLine();
-        if(line == null){
+        if (line == null) {
             return result.toString();
         }
         result.append(line);
-        while((line = reader.readLine()) != null){
+        while ((line = reader.readLine()) != null) {
             result.append("\r\n").append(line);
         }
         return reader.toString();
-    }finally {
-        if(reader != null){
+    } finally {
+        if (reader != null) {
             try {
                 reader.close();
             } catch (IOException ignored) { }
@@ -322,17 +323,17 @@ public String readFileAsString(File file) throws IOException {
 public String readFileAsString(File file) throws IOException {
     StringBuilder result = new StringBuilder();
     //引入 auto close 机制
-    try(BufferedReader reader = new BufferedReader(new FileReader(file))){
+    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
         String line = reader.readLine();
-        if(line == null){
+        if (line == null) {
             return result.toString();
         }
         result.append(line);
-        while((line = reader.readLine()) != null){
+        while ((line = reader.readLine()) != null) {
             result.append("\r\n").append(line);
         }
         return reader.toString();
-    } 
+    }
 }
 
 //JDK 1.8
@@ -344,7 +345,6 @@ public String readFileAsString(File file) throws IOException {
             .orElse("");
 }
 ```
-
 
 # if 表达式
 
