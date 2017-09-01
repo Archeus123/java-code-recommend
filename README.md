@@ -59,7 +59,7 @@ public class UserController {
 }
 ```
 
-上面的Java代码注释清楚明白，但是 UserService#login 的定义存在一些问题：
+UserService#login 的定义存在一些问题：
 
 - **使用困难** 调用者需要写很多的代码才可以处理 UserService#login 的返回。<br>
 有些程序员会让 UserService#login 直接返回CommonResponse。这样可以减少Controller层的一些代码，
@@ -92,6 +92,8 @@ public class UserController {
 }
 ```
 
+声明式异常带来的好处：
+
 - **消灭if** 绝大多数情况下，业务系统遇到自定义异常时都会停止后续逻辑，直接提示用户。
 
 - **消灭重复** 所有的出错情况都只在异常类上面说明即可。
@@ -102,7 +104,7 @@ public class UserController {
 
 1. 利用继承对异常进行分类，在需要的时候catch它。
 2. 在框架中添加异常处理机制，或通知用户，或打印日志。
-3. 不要 throw,catch Exception类，它会“淹没”所有异常。
+3. 不要 throw, catch Exception类，它会“淹没”所有异常。
 4. 慎用RuntimeException，因为它不是**声明式**的。
 
 
@@ -145,13 +147,13 @@ String hash(String str){
 
 在Java中，我们需要一些约定来减少这种重复的劳动：
 
-> * 所有的参数与返回都不允许为 null，如果可能返回 null，或者允许传入 null， 则必须声明。
+> * 所有的参数与返回都不应该为 null，如果可能返回 null，或者允许传入 null， 则必须声明。
 > * 所有的数组，数据集合(如 java.util.Collection, java.util.stream.Stream... )都不可以为 null。
 
 &emsp;&emsp;遵守这些约定，把 null 判断的职责交给调用者。最终仅在数据的产生位置保证数据的正确性。
 对于业务系统来说，仅在JS端保证不会提交 null 数据即可。
-如果程序被黑盒测试或者遇到第三方攻击绕过了JS，让JVM帮助我们抛出空指针异常即可。<br>
-&emsp;&emsp;使用 java.util.Collections 中内置的各种空数据集传入，返回。
+如果程序被黑盒测试或者遇到第三方攻击绕过了JS，让SDK帮助我们抛出空指针异常即可。<br>
+&emsp;&emsp;对于数据集(List, Set, Map...)，不要传入或者返回 null，使用 java.util.Collections 中内置的空集替代。
 
 ## 如何声明 NULL
 
@@ -184,8 +186,8 @@ void call(String json); //bad
 
 void call(String xml); //bad
 ```
-&emsp;&emsp;上面方法参数的定义就存在巨大歧义，单从方法的定义调用者根本无法使用。这中时候必须配合详尽的文档才能使用这个方法。
-而这种“万金油”方法的文档往往会很长，维护成本非常高昂。文档一旦脱节就必须阅读实现才可以调用，这种时候程序就会变得异常脆弱，充满Bug。
+&emsp;&emsp;上面方法参数的定义就存在歧义，调用者无法仅通过定义就使用方法。这种时候必须配合详尽的文档才能使用方法。
+而这种“万金油”方法的注释往往很长，维护成本非常高昂。注释一旦脱节就必须阅读方法实现才可以调用，这种时候程序就会变得异常脆弱，充满Bug。
 
 正确的做法：
 ```Java
@@ -200,6 +202,7 @@ void callMethodC(int id, String desc);
 
 * 不要试图为不同方法提供统一的参数。
 * 不要使用String表达有结构的数据，使用有结构的Bean代替。
+* 更推荐使用基础类型代替Bean，这样的方法往往可以拿来就用。
 
 ## 返回
 
@@ -227,8 +230,8 @@ Animal call();//smell
 List<Animal> call();//smell
 ```
 
-&emsp;&emsp;返回值保持单一性，一个方法多种返回就会导致调用这书写 if 来处理不同的返回。
-如果方法返回值的种类发生变动，所有的调用者就必须修改响应的代码。一旦遗漏就会引入隐藏的Bug。
+&emsp;&emsp;返回类型保持单一，一个方法多种返回就会导致调用者需书写 if 来处理不同的返回。
+如果方法返回的种类发生变动，所有的调用者就必须修改相应的代码。一旦遗漏就会引入隐藏的Bug。
 
 正确的做法：
 ```Java
@@ -286,6 +289,62 @@ public class Bird extends Animal {
 
 * 返回无歧义。JSON，XML，特殊符分割的String全部转化为有结构的Bean。
 * 如果调用者需要对派生类做出不同处理，则应避免返回基类。
+
+# 优先使用新版的JDK
+
+从读文件观察Java的更新进步：
+```Java
+//JDK 1.6
+public String readFileAsString(File file) throws IOException {
+    StringBuilder result = new StringBuilder();
+    BufferedReader reader = null;
+    try{
+        reader = new BufferedReader(new FileReader(file));
+        String line = reader.readLine();
+        if(line == null){
+            return result.toString();
+        }
+        result.append(line);
+        while((line = reader.readLine()) != null){
+            result.append("\r\n").append(line);
+        }
+        return reader.toString();
+    }finally {
+        if(reader != null){
+            try {
+                reader.close();
+            } catch (IOException ignored) { }
+        }
+    }
+}
+
+//JDK 1.7
+public String readFileAsString(File file) throws IOException {
+    StringBuilder result = new StringBuilder();
+    //引入 auto close 机制
+    try(BufferedReader reader = new BufferedReader(new FileReader(file))){
+        String line = reader.readLine();
+        if(line == null){
+            return result.toString();
+        }
+        result.append(line);
+        while((line = reader.readLine()) != null){
+            result.append("\r\n").append(line);
+        }
+        return reader.toString();
+    } 
+}
+
+//JDK 1.8
+public String readFileAsString(File file) throws IOException {
+    //大量内置的工具类 与 lambda 表达式
+    return Files.readAllLines(file.toPath())
+            .stream()
+            .reduce((s, s2) -> s + "\r\n" + s2)
+            .orElse("");
+}
+```
+
 
 # if 表达式
 
