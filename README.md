@@ -286,3 +286,7 @@ public class Bird extends Animal {
 
 * 返回无歧义。JSON，XML，特殊符分割的String全部转化为有结构的Bean。
 * 如果调用者需要对派生类做出不同处理，则应避免返回基类。
+
+# if 表达式
+
+...待续
