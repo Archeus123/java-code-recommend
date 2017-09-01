@@ -101,10 +101,14 @@ public class UserController {
 
 1. 利用继承对异常进行分类，在需要的时候catch它。
 2. 在框架中添加异常处理机制，或通知用户，或打印日志。
-3. 千万不要抛出Exception类，它会“淹没”所有异常。
+3. 不要 throw,catch Exception类，它会“淹没”所有异常。
 4. 慎用RuntimeException，因为它不是**声明式**的。
 
 
-# 参数与返回
+# NULL
 
-...待续
+空指针是最常见的Java异常，为了避免它，Java代码中到处充斥着：
+```Java
+if(obj == null) { ... }
+```
+
