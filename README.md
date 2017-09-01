@@ -17,7 +17,7 @@
 
 &emsp;&emsp;注释是降低方法使用成本的万能钥匙，但注释会花费大量的编写成本。
 很多程序员被迫写注释，它们的注释通常比较简洁。明明写了注释，却还要阅读方法实现的情况时有发生。
-如果一个方法的实现经常发生变动，维护注释的高昂成本很可能导致注释与方法实现不符，这样的错误注释反而误导了调用者。
+如果一个方法的实现经常发生变动，维护注释的高昂成本很可能导致注释与方法实现不符，这样的错误注释反而会误导调用者。
 
 
 # 使用异常
@@ -26,6 +26,15 @@ Java的声明式异常是十分优秀的语言特性，但Java开发者却很少
 
 下面是一段常见的登录代码：
 ```Java
+public class UserService {
+    
+    /**
+    * 1: 登录成功 2: 用户名密码错误 3: 用户被锁定 4: ...
+    */
+    public int login(String username, String password) { ... }
+}
+
+
 public class UserController {
 
     private UserService userService;
@@ -48,14 +57,6 @@ public class UserController {
         return res;
     }
 }
-
-public class UserService {
-    
-    /**
-    * 1: 登录成功 2: 用户名密码错误 3: 用户被锁定 4: ...
-    */
-    public int login(String username, String password) { ... }
-}
 ```
 
 上面的Java代码注释清楚明白，但是 UserService#login 的定义存在一些问题：
@@ -69,7 +70,7 @@ public class UserService {
 - **维护困难** 当 UserService#login 的返回发生了变动，比如增加了一种状态，那么就需要修改所有调用者的代码和注释来响应这一变动。一旦遗漏，就会产生一个不容易发现的Bug。
 
 
-声明式异常就在这种时候大显神通：
+使用异常：
 ```Java
 /**
 * 2: 用户名密码错误 3: 用户被锁定 4: ...
@@ -142,7 +143,7 @@ String hash(String str){
 &emsp;&emsp;上面的代码对 username和password 做了重复的 null 判断。不仅浪费CPU而且增加编写的时间成本。
 为了解决 null 问题，很多语言提供了语法糖或者从根本上不允许出现 null 的变量。
 
-在Java中，我们需要一些约定来减少这种重复的劳动。
+在Java中，我们需要一些约定来减少这种重复的劳动：
 
 > * 所有的参数与返回都不允许为 null，如果可能返回 null，或者允许传入 null， 则必须声明。
 > * 所有的数组，数据集合(如 java.util.Collection, java.util.stream.Stream... )都不可以为 null。
@@ -159,6 +160,129 @@ String hash(String str){
 
 * **java.util.Optional<T>** Java8的optional包装就隐含了可能是 null 的意思。
 
+
 # 参数与返回
 
+好的方法定义应当避免歧义，参数与返回尽量保有结构性和单一性，使调用者仅从方法定义就可以使用该方法。
 
+## 参数
+
+```Java
+void call(String method, Object.. args); //very bad
+
+void call(SomeEnum method, Object... args); //bad
+
+
+public class Request{
+    private SomeEnum method;
+    private Map<String, Object> args;
+}
+
+void call(Request req); //bad
+
+void call(String json); //bad
+
+void call(String xml); //bad
+```
+&emsp;&emsp;上面方法参数的定义就存在巨大歧义，单从方法的定义调用者根本无法使用。这中时候必须配合详尽的文档才能使用这个方法。
+而这种“万金油”方法的文档往往会很长，维护成本非常高昂。文档一旦脱节就必须阅读实现才可以调用，这种时候程序就会变得异常脆弱，充满Bug。
+
+正确的做法：
+```Java
+void callMethodA(ArgumentA a);
+
+void callMethodB(ArgumentB b);
+
+void callMethodC(int id, String desc);
+```
+
+## 如何定义参数
+
+* 不要试图为不同方法提供统一的参数。
+* 不要使用String表达有结构的数据，使用有结构的Bean代替。
+
+## 返回
+
+```Java
+Map<String, Object> call();//bad
+
+List<Object> call();//bad
+
+String getJSON();//bad
+
+String getXML();//bad
+
+
+public class Animal { ... }
+
+public class Cat extends Animal { ... }
+
+public class Dog extends Animal { ... }
+
+public class Bird extends Animal { ... }
+
+
+Animal call();//smell
+
+List<Animal> call();//smell
+```
+
+&emsp;&emsp;返回值保持单一性，一个方法多种返回就会导致调用这书写 if 来处理不同的返回。
+如果方法返回值的种类发生变动，所有的调用者就必须修改响应的代码。一旦遗漏就会引入隐藏的Bug。
+
+正确的做法：
+```Java
+Map<String, User> call();//value always User
+
+//单一的返回
+Cat call();
+Dog call();
+Bird call();
+
+
+//replace Animal call();
+void call(AnimalVisitor visitor){
+    ...
+    //return animal;
+    animal.accept(visitor);
+}
+
+interface AnimalVisitor {
+
+    void visit(Cat cat);
+    void visit(Dog dog);
+    void visit(Bird bird);
+}
+
+public abstract class Animal {
+    ...
+    abstract void accept(AnimalVisitor visitor);
+}
+
+public class Cat extends Animal { 
+    ...
+    void accept(AnimalVisitor visitor){
+        visitor.visit(this);
+    }
+}
+
+public class Dog extends Animal { 
+    ...
+    void accept(AnimalVisitor visitor){
+        visitor.visit(this);
+    }
+}
+
+public class Bird extends Animal { 
+    ...
+    void accept(AnimalVisitor visitor){
+        visitor.visit(this);
+    }
+}
+```
+&emsp;&emsp;访问者模式可以要求调用者对所有可能的返回做出响应，避免遗漏情况的发生。
+
+## 如何定义返回
+
+* 返回无歧义。JSON，XML，特殊符分割的String全部转化为有结构的Bean。
+* 如果调用者需要对派生类做出不同处理，则应避免返回基类。
