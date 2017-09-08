@@ -347,6 +347,10 @@ public String readFileAsString(File file) throws IOException {
 }
 ```
 
+    JDK就像开发者的工具，更好的工具可以帮助程序员写出更好的程序。
+虽然新版JDK能做的事情，旧JDK也可以做，但新版的JDK能做的更好更快。
+所以如果可能，尽量使用新版的JDK。
+
 # if 表达式
 
 ...待续
